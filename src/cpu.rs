@@ -64,6 +64,25 @@ impl Cpu {
             0xAC => Self::ldy_abs,
             0xBC => Self::ldy_abx,
 
+            //STA
+            0x85 => Self::sta_zp,
+            0x95 => Self::sta_zpx,
+            0x8D => Self::sta_abs,
+            0x9D => Self::sta_abx,
+            0x99 => Self::sta_aby,
+            0x81 => Self::sta_inx,
+            0x91 => Self::sta_iny,
+
+            //STX
+            0x86 => Self::stx_zp,
+            0x96 => Self::stx_zpy,
+            0x8E => Self::stx_abs,
+
+            //STY
+            0x84 => Self::sty_zp,
+            0x94 => Self::sty_zpx,
+            0x8C => Self::sty_abs,
+
             _ => unimplemented!("{} opcode not implemented yet!\n", opcode),
         }
     }
@@ -305,6 +324,96 @@ impl Cpu {
         self.pc += 1;
     }
 
+    fn sta_zp(&mut self) {
+        let addr = self.zp();
+        self.ram.write(addr, self.a);
+
+        self.pc += 1;
+    }
+
+    fn sta_zpx(&mut self) {
+        let addr = self.zpx();
+        self.ram.write(addr, self.a);
+
+        self.pc += 1;
+    }
+
+    fn sta_abs(&mut self) {
+        let addr = self.abs();
+        self.ram.write(addr, self.a);
+
+        self.pc += 1;
+    }
+
+    fn sta_abx(&mut self) {
+        let addr = self.abx();
+        self.ram.write(addr, self.a);
+
+        self.pc += 1;
+    }
+
+    fn sta_aby(&mut self) {
+        let addr = self.aby();
+        self.ram.write(addr, self.a);
+
+        self.pc += 1;
+    }
+
+    fn sta_inx(&mut self) {
+        let addr = self.inx();
+        self.ram.write(addr, self.a);
+
+        self.pc += 1;
+    }
+
+    fn sta_iny(&mut self) {
+        let addr = self.iny();
+        self.ram.write(addr, self.a);
+
+        self.pc += 1;
+    }
+
+    fn stx_zp(&mut self) {
+        let addr = self.zp();
+        self.ram.write(addr, self.x);
+
+        self.pc += 1;
+    }
+
+    fn stx_zpy(&mut self) {
+        let addr = self.zpy();
+        self.ram.write(addr, self.x);
+
+        self.pc += 1;
+    }
+
+    fn stx_abs(&mut self) {
+        let addr = self.abs();
+        self.ram.write(addr, self.x);
+
+        self.pc += 1;
+    }
+
+    fn sty_zp(&mut self) {
+        let addr = self.zp();
+        self.ram.write(addr, self.y);
+
+        self.pc += 1;
+    }
+
+    fn sty_zpx(&mut self) {
+        let addr = self.zpx();
+        self.ram.write(addr, self.y);
+
+        self.pc += 1;
+    }
+
+    fn sty_abs(&mut self) {
+        let addr = self.abs();
+        self.ram.write(addr, self.y);
+
+        self.pc += 1;
+    }
 }
 
 #[test]
@@ -652,4 +761,202 @@ fn ldy_negative_flag() {
 
     cpu.read_instruction();
     assert!(!cpu.negative_flag);
+}
+
+#[test]
+fn sta_zp() {
+    let mut ram = Ram::create();
+    ram.write(0x0, 0x85);
+    ram.write(0x1, 0x32);
+    let mut cpu = Cpu::create(ram);
+
+    cpu.a = 0x3;
+    cpu.read_instruction();
+
+    assert_eq!(cpu.ram.read(0x32), 0x3);
+    assert_eq!(cpu.pc, 0x2);
+}
+
+#[test]
+fn sta_zpx() {
+    let mut ram = Ram::create();
+    ram.write(0x0, 0x95);
+    ram.write(0x1, 0x32);
+    let mut cpu = Cpu::create(ram);
+
+    cpu.a = 0x3;
+    cpu.x = 0x2;
+    cpu.read_instruction();
+
+    assert_eq!(cpu.ram.read(0x32+0x2), 0x3);
+    assert_eq!(cpu.pc, 0x2);
+}
+
+#[test]
+fn sta_abs() {
+    let mut ram = Ram::create();
+    ram.write(0x0, 0x8D);
+    ram.write(0x1, 0x32);
+    ram.write(0x2, 0x69);
+    let mut cpu = Cpu::create(ram);
+
+    cpu.a = 0x3;
+    cpu.read_instruction();
+
+    assert_eq!(cpu.ram.read(0x6932), 0x3);
+    assert_eq!(cpu.pc, 0x3);
+}
+
+#[test]
+fn sta_abx() {
+    let mut ram = Ram::create();
+    ram.write(0x0, 0x9D);
+    ram.write(0x1, 0x32);
+    ram.write(0x2, 0x69);
+    let mut cpu = Cpu::create(ram);
+
+    cpu.a = 0x3;
+    cpu.x = 0x2;
+    cpu.read_instruction();
+
+    assert_eq!(cpu.ram.read(0x6932 + 0x2), 0x3);
+    assert_eq!(cpu.pc, 0x3);
+}
+
+#[test]
+fn sta_aby() {
+    let mut ram = Ram::create();
+    ram.write(0x0, 0x99);
+    ram.write(0x1, 0x32);
+    ram.write(0x2, 0x69);
+    let mut cpu = Cpu::create(ram);
+
+    cpu.a = 0x3;
+    cpu.y = 0x2;
+    cpu.read_instruction();
+
+    assert_eq!(cpu.ram.read(0x6932 + 0x2), 0x3);
+    assert_eq!(cpu.pc, 0x3);
+}
+
+#[test]
+fn sta_inx() {
+    let mut ram = Ram::create();
+    ram.write(0x0, 0x81);
+    ram.write(0x1, 0x32);
+    ram.write(0x32 + 0x2, 0x44);
+    ram.write(0x33 + 0x2, 0x64);
+    let mut cpu = Cpu::create(ram);
+
+    cpu.a = 0x3;
+    cpu.x = 0x2;
+    cpu.read_instruction();
+
+    assert_eq!(cpu.ram.read(0x6444), 0x3);
+    assert_eq!(cpu.pc, 0x2);
+}
+
+#[test]
+fn sta_iny() {
+    let mut ram = Ram::create();
+    ram.write(0x0, 0x91);
+    ram.write(0x1, 0x32);
+    ram.write(0x32, 0x44);
+    ram.write(0x33, 0x64);
+    let mut cpu = Cpu::create(ram);
+
+    cpu.a = 0x3;
+    cpu.y = 0x2;
+    cpu.read_instruction();
+
+    assert_eq!(cpu.ram.read(0x6444 + 0x2), 0x3);
+    assert_eq!(cpu.pc, 0x2);
+}
+
+#[test]
+fn stx_zp() {
+    let mut ram = Ram::create();
+    ram.write(0x0, 0x86);
+    ram.write(0x1, 0x32);
+    let mut cpu = Cpu::create(ram);
+
+    cpu.x = 0x3;
+    cpu.read_instruction();
+
+    assert_eq!(cpu.ram.read(0x32), 0x3);
+    assert_eq!(cpu.pc, 0x2);
+}
+
+#[test]
+fn stx_zpy() {
+    let mut ram = Ram::create();
+    ram.write(0x0, 0x96);
+    ram.write(0x1, 0x32);
+    let mut cpu = Cpu::create(ram);
+
+    cpu.x = 0x3;
+    cpu.y = 0x2;
+    cpu.read_instruction();
+
+    assert_eq!(cpu.ram.read(0x32+0x2), 0x3);
+    assert_eq!(cpu.pc, 0x2);
+}
+
+#[test]
+fn stx_abs() {
+    let mut ram = Ram::create();
+    ram.write(0x0, 0x8E);
+    ram.write(0x1, 0x32);
+    ram.write(0x2, 0x69);
+    let mut cpu = Cpu::create(ram);
+
+    cpu.x = 0x3;
+    cpu.read_instruction();
+
+    assert_eq!(cpu.ram.read(0x6932), 0x3);
+    assert_eq!(cpu.pc, 0x3);
+}
+
+#[test]
+fn sty_zp() {
+    let mut ram = Ram::create();
+    ram.write(0x0, 0x84);
+    ram.write(0x1, 0x32);
+    let mut cpu = Cpu::create(ram);
+
+    cpu.y = 0x3;
+    cpu.read_instruction();
+
+    assert_eq!(cpu.ram.read(0x32), 0x3);
+    assert_eq!(cpu.pc, 0x2);
+}
+
+#[test]
+fn sty_zpx() {
+    let mut ram = Ram::create();
+    ram.write(0x0, 0x94);
+    ram.write(0x1, 0x32);
+    let mut cpu = Cpu::create(ram);
+
+    cpu.y = 0x3;
+    cpu.x = 0x2;
+    cpu.read_instruction();
+
+    assert_eq!(cpu.ram.read(0x32+0x2), 0x3);
+    assert_eq!(cpu.pc, 0x2);
+}
+
+#[test]
+fn sty_abs() {
+    let mut ram = Ram::create();
+    ram.write(0x0, 0x8C);
+    ram.write(0x1, 0x32);
+    ram.write(0x2, 0x69);
+    let mut cpu = Cpu::create(ram);
+
+    cpu.y = 0x3;
+    cpu.read_instruction();
+
+    assert_eq!(cpu.ram.read(0x6932), 0x3);
+    assert_eq!(cpu.pc, 0x3);
 }
