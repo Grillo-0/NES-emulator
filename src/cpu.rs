@@ -137,6 +137,24 @@ impl Cpu {
             //TYA
             0x98 => instr!(tya-imp),
 
+            //TSX
+            0xBA => instr!(tsx-imp),
+
+            //TXS
+            0x9A => instr!(txs-imp),
+
+            //PHA
+            0x48 => instr!(pha-imp),
+
+            //PHP
+            0x08 => instr!(php-imp),
+
+            //PLA
+            0x68 => instr!(pla-imp),
+
+            //PLP
+            0x28 => instr!(plp-imp),
+
             _ => unimplemented!("{:#04X} opcode not implemented yet!\n", opcode),
         }
     }
@@ -196,6 +214,10 @@ impl Cpu {
         let addr: u16 = self.ram.read(self.pc) as u16;
         let addr = (self.ram.read(addr + 1) as u16) << 8 | self.ram.read(addr.into()) as u16;
         addr + self.y as u16
+    }
+
+    fn get_sp_addr(&self) -> u16 {
+        0x0100 | self.sp as u16
     }
 
     fn lda(&mut self, addr: u16) {
@@ -275,6 +297,52 @@ impl Cpu {
 
         if self.a == 0 {self.set_zero_flag()}
         if self.a & 1 << 7 != 0 {self.set_negative_flag()}
+
+        self.pc +=1;
+    }
+
+    fn tsx(&mut self) {
+        self.x = self.sp;
+
+        if self.x == 0 {self.set_zero_flag()}
+        if self.x & 1 << 7 != 0 {self.set_negative_flag()}
+
+        self.pc +=1;
+    }
+
+    fn txs(&mut self) {
+        self.sp = self.x;
+
+        self.pc +=1;
+    }
+
+    fn pha(&mut self) {
+        self.ram.write(self.get_sp_addr(), self.a);
+
+        self.pc +=1;
+        self.sp -=1;
+    }
+
+    fn php(&mut self) {
+        self.ram.write(self.get_sp_addr(), self.status);
+
+        self.pc +=1;
+        self.sp -=1;
+    }
+
+    fn pla(&mut self) {
+        self.sp += 1;
+        self.a = self.ram.read(self.get_sp_addr());
+
+        if self.a == 0 {self.set_zero_flag()}
+        if self.a & 1 << 7 != 0 {self.set_negative_flag()}
+
+        self.pc +=1;
+    }
+
+    fn plp(&mut self) {
+        self.sp += 1;
+        self.status = self.ram.read(self.get_sp_addr());
 
         self.pc +=1;
     }
@@ -946,5 +1014,138 @@ mod test {
         cpu.read_instruction();
 
         assert!(cpu.get_negative_flag());
+    }
+
+    #[test]
+    fn tsx_imp() {
+        let mut ram = Ram::create();
+        ram.write(0x0, 0xBA);
+        let mut cpu = Cpu::create(ram);
+
+        cpu.read_instruction();
+
+        assert_eq!(cpu.x, cpu.sp);
+        assert_eq!(cpu.pc, 0x1);
+    }
+
+    #[test]
+    fn tsx_zero_flag() {
+        let mut ram = Ram::create();
+        ram.write(0x0, 0xBA);
+        let mut cpu = Cpu::create(ram);
+
+        cpu.sp = 0x00;
+        cpu.read_instruction();
+
+        assert!(cpu.get_zero_flag());
+    }
+
+    #[test]
+    fn tsx_negative_flag() {
+        let mut ram = Ram::create();
+        ram.write(0x0, 0xBA);
+        let mut cpu = Cpu::create(ram);
+
+        cpu.sp = 0x80;
+        cpu.read_instruction();
+
+        assert!(cpu.get_negative_flag());
+    }
+
+    #[test]
+    fn txs_imp() {
+        let mut ram = Ram::create();
+        ram.write(0x0, 0x9A);
+        let mut cpu = Cpu::create(ram);
+
+        cpu.x = 0x69;
+        cpu.read_instruction();
+
+        assert_eq!(cpu.sp, cpu.x);
+        assert_eq!(cpu.pc, 0x01);
+    }
+
+    #[test]
+    fn pha_imp() {
+        let mut ram = Ram::create();
+        ram.write(0x0, 0x48);
+        let mut cpu = Cpu::create(ram);
+
+        cpu.a = 0x69;
+        cpu.read_instruction();
+
+        assert_eq!(cpu.ram.read(0x01ff), 0x69);
+        assert_eq!(cpu.sp, 0xfe);
+        assert_eq!(cpu.pc, 0x01);
+    }
+
+    #[test]
+    fn php_imp() {
+        let mut ram = Ram::create();
+        ram.write(0x0, 0x08);
+        let mut cpu = Cpu::create(ram);
+
+        cpu.status = 0x69;
+        cpu.read_instruction();
+
+        assert_eq!(cpu.ram.read(0x01ff), 0x69);
+        assert_eq!(cpu.sp, 0xfe);
+        assert_eq!(cpu.pc, 0x01);
+    }
+
+    #[test]
+    fn pla_zero_flag() {
+        let mut ram = Ram::create();
+        ram.write(0x0, 0x68);
+        ram.write(0x01ff, 0x00);
+        let mut cpu = Cpu::create(ram);
+
+        cpu.sp = 0xfe;
+        cpu.read_instruction();
+
+        assert!(cpu.get_zero_flag());
+    }
+
+    #[test]
+    fn pla_negative_flag() {
+        let mut ram = Ram::create();
+        ram.write(0x0, 0x68);
+        ram.write(0x01ff, 0x80);
+        let mut cpu = Cpu::create(ram);
+
+        cpu.sp = 0xfe;
+        cpu.read_instruction();
+
+        assert!(cpu.get_negative_flag());
+    }
+
+    #[test]
+    fn pla_imp() {
+        let mut ram = Ram::create();
+        ram.write(0x0, 0x68);
+        ram.write(0x01ff, 0x42);
+        let mut cpu = Cpu::create(ram);
+
+        cpu.sp = 0xfe;
+        cpu.read_instruction();
+
+        assert_eq!(cpu.a, 0x42);
+        assert_eq!(cpu.sp, 0xff);
+        assert_eq!(cpu.pc, 0x01);
+    }
+
+    #[test]
+    fn plp_imp() {
+        let mut ram = Ram::create();
+        ram.write(0x0, 0x28);
+        ram.write(0x01ff, 0x42);
+        let mut cpu = Cpu::create(ram);
+
+        cpu.sp = 0xfe;
+        cpu.read_instruction();
+
+        assert_eq!(cpu.status, 0x42);
+        assert_eq!(cpu.sp, 0xff);
+        assert_eq!(cpu.pc, 0x01);
     }
 }
