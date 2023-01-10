@@ -252,695 +252,701 @@ impl Cpu {
     }
 }
 
-#[test]
-fn lda_imm() {
-    let mut ram = Ram::create();
-    ram.write(0x0, 0xA9);
-    ram.write(0x1, 0x42);
-    let mut cpu = Cpu::create(ram);
-    cpu.read_instruction();
-
-    assert_eq!(cpu.a, 0x42);
-    assert_eq!(cpu.pc, 0x2);
-}
-
-#[test]
-fn lda_zp() {
-    let mut ram = Ram::create();
-    ram.write(0x0, 0xA5);
-    ram.write(0x1, 0x69);
-    ram.write(0x69, 0x42);
-    let mut cpu = Cpu::create(ram);
-    cpu.read_instruction();
-
-    assert_eq!(cpu.a, 0x42);
-    assert_eq!(cpu.pc, 0x2);
-}
-
-#[test]
-fn lda_zpx() {
-    let mut ram = Ram::create();
-    ram.write(0x0, 0xB5);
-    ram.write(0x1, 0x69);
-    ram.write(0x69 + 0x5, 0x42);
-    let mut cpu = Cpu::create(ram);
-    cpu.x = 0x5;
-    cpu.read_instruction();
-
-    assert_eq!(cpu.a, 0x42);
-    assert_eq!(cpu.pc, 0x2);
-}
-
-#[test]
-fn lda_abs() {
-    let mut ram = Ram::create();
-    ram.write(0x0, 0xAD);
-    ram.write(0x1, 0x32);
-    ram.write(0x2, 0x44);
-    ram.write(0x4432, 0x42);
-    let mut cpu = Cpu::create(ram);
-    cpu.read_instruction();
-
-    assert_eq!(cpu.a, 0x42);
-    assert_eq!(cpu.pc, 0x3);
-}
-
-#[test]
-fn lda_abx() {
-    let mut ram = Ram::create();
-    ram.write(0x0, 0xBD);
-    ram.write(0x1, 0x32);
-    ram.write(0x2, 0x44);
-    ram.write(0x4432 + 0x3, 0x42);
-    let mut cpu = Cpu::create(ram);
-    cpu.x = 0x3;
-    cpu.read_instruction();
-
-    assert_eq!(cpu.a, 0x42);
-    assert_eq!(cpu.pc, 0x3);
-}
-
-#[test]
-fn lda_aby() {
-    let mut ram = Ram::create();
-    ram.write(0x0, 0xB9);
-    ram.write(0x1, 0x32);
-    ram.write(0x2, 0x44);
-    ram.write(0x4432 + 0x3, 0x42);
-    let mut cpu = Cpu::create(ram);
-    cpu.y = 0x3;
-    cpu.read_instruction();
-
-    assert_eq!(cpu.a, 0x42);
-    assert_eq!(cpu.pc, 0x3);
-}
-
-#[test]
-fn lda_inx() {
-    let mut ram = Ram::create();
-    ram.write(0x0, 0xa1);
-    ram.write(0x1, 0x42);
-    ram.write(0x42 + 0x02, 0x69);
-    ram.write(0x43 + 0x02, 0x35);
-    ram.write(0x3569, 0x55);
-    let mut cpu = Cpu::create(ram);
-    cpu.x = 0x2;
-    cpu.read_instruction();
-
-    assert_eq!(cpu.a, 0x55);
-    assert_eq!(cpu.pc, 0x2);
-}
-
-#[test]
-fn lda_iny() {
-    let mut ram = Ram::create();
-    ram.write(0x0, 0xB1);
-    ram.write(0x1, 0x42);
-    ram.write(0x42, 0x69);
-    ram.write(0x43, 0x35);
-    ram.write(0x3569 + 0x2, 0x55);
-    let mut cpu = Cpu::create(ram);
-    cpu.y = 0x2;
-    cpu.read_instruction();
-
-    assert_eq!(cpu.a, 0x55);
-    assert_eq!(cpu.pc, 0x2);
-}
-
-#[test]
-fn lda_zero_flag() {
-    let mut ram = Ram::create();
-    ram.write(0x0, 0xA9);
-    ram.write(0x1, 0x00);
-    ram.write(0x2, 0xA9);
-    ram.write(0x3, 0x01);
-    let mut cpu = Cpu::create(ram);
-
-    cpu.read_instruction();
-    assert!(cpu.zero_flag);
-
-    cpu.read_instruction();
-    assert!(!cpu.zero_flag);
-}
-
-#[test]
-fn lda_negative_flag() {
-    let mut ram = Ram::create();
-    ram.write(0x0, 0xA9);
-    ram.write(0x1, 0x80);
-    ram.write(0x2, 0xA9);
-    ram.write(0x3, 0x01);
-    let mut cpu = Cpu::create(ram);
-
-    cpu.read_instruction();
-    assert!(cpu.negative_flag);
-
-    cpu.read_instruction();
-    assert!(!cpu.negative_flag);
-}
-
-#[test]
-fn ldx_imm() {
-    let mut ram = Ram::create();
-    ram.write(0x0, 0xA2);
-    ram.write(0x1, 0x42);
-    let mut cpu = Cpu::create(ram);
-    cpu.read_instruction();
-
-    assert_eq!(cpu.x, 0x42);
-    assert_eq!(cpu.pc, 0x2);
-}
-
-#[test]
-fn ldx_zp() {
-    let mut ram = Ram::create();
-    ram.write(0x0, 0xA6);
-    ram.write(0x1, 0x69);
-    ram.write(0x69, 0x42);
-    let mut cpu = Cpu::create(ram);
-    cpu.read_instruction();
-
-    assert_eq!(cpu.x, 0x42);
-    assert_eq!(cpu.pc, 0x2);
-}
-
-#[test]
-fn ldx_zpy() {
-    let mut ram = Ram::create();
-    ram.write(0x0, 0xB6);
-    ram.write(0x1, 0x69);
-    ram.write(0x69 + 0x5, 0x42);
-    let mut cpu = Cpu::create(ram);
-    cpu.y = 0x5;
-    cpu.read_instruction();
-
-    assert_eq!(cpu.x, 0x42);
-    assert_eq!(cpu.pc, 0x2);
-}
-
-#[test]
-fn ldx_abs() {
-    let mut ram = Ram::create();
-    ram.write(0x0, 0xAE);
-    ram.write(0x1, 0x32);
-    ram.write(0x2, 0x44);
-    ram.write(0x4432, 0x42);
-    let mut cpu = Cpu::create(ram);
-    cpu.read_instruction();
-
-    assert_eq!(cpu.x, 0x42);
-    assert_eq!(cpu.pc, 0x3);
-}
-
-#[test]
-fn ldx_aby() {
-    let mut ram = Ram::create();
-    ram.write(0x0, 0xBE);
-    ram.write(0x1, 0x32);
-    ram.write(0x2, 0x44);
-    ram.write(0x4432 + 0x3, 0x42);
-    let mut cpu = Cpu::create(ram);
-    cpu.y = 0x3;
-    cpu.read_instruction();
-
-    assert_eq!(cpu.x, 0x42);
-    assert_eq!(cpu.pc, 0x3);
-}
-
-#[test]
-fn ldx_zero_flag() {
-    let mut ram = Ram::create();
-    ram.write(0x0, 0xA2);
-    ram.write(0x1, 0x00);
-    ram.write(0x2, 0xA2);
-    ram.write(0x3, 0x01);
-    let mut cpu = Cpu::create(ram);
-
-    cpu.read_instruction();
-    assert!(cpu.zero_flag);
-
-    cpu.read_instruction();
-    assert!(!cpu.zero_flag);
-}
-
-#[test]
-fn ldx_negative_flag() {
-    let mut ram = Ram::create();
-    ram.write(0x0, 0xA2);
-    ram.write(0x1, 0x80);
-    ram.write(0x2, 0xA2);
-    ram.write(0x3, 0x01);
-    let mut cpu = Cpu::create(ram);
-
-    cpu.read_instruction();
-    assert!(cpu.negative_flag);
-
-    cpu.read_instruction();
-    assert!(!cpu.negative_flag);
-}
-
-#[test]
-fn ldy_imm() {
-    let mut ram = Ram::create();
-    ram.write(0x0, 0xA0);
-    ram.write(0x1, 0x42);
-    let mut cpu = Cpu::create(ram);
-    cpu.read_instruction();
-
-    assert_eq!(cpu.y, 0x42);
-    assert_eq!(cpu.pc, 0x2);
-}
-
-#[test]
-fn ldy_zp() {
-    let mut ram = Ram::create();
-    ram.write(0x0, 0xA4);
-    ram.write(0x1, 0x69);
-    ram.write(0x69, 0x42);
-    let mut cpu = Cpu::create(ram);
-    cpu.read_instruction();
-
-    assert_eq!(cpu.y, 0x42);
-    assert_eq!(cpu.pc, 0x2);
-}
-
-#[test]
-fn ldy_zpx() {
-    let mut ram = Ram::create();
-    ram.write(0x0, 0xB4);
-    ram.write(0x1, 0x69);
-    ram.write(0x69 + 0x5, 0x42);
-    let mut cpu = Cpu::create(ram);
-    cpu.x = 0x5;
-    cpu.read_instruction();
-
-    assert_eq!(cpu.y, 0x42);
-    assert_eq!(cpu.pc, 0x2);
-}
-
-#[test]
-fn ldy_abs() {
-    let mut ram = Ram::create();
-    ram.write(0x0, 0xAC);
-    ram.write(0x1, 0x32);
-    ram.write(0x2, 0x44);
-    ram.write(0x4432, 0x42);
-    let mut cpu = Cpu::create(ram);
-    cpu.read_instruction();
-
-    assert_eq!(cpu.y, 0x42);
-    assert_eq!(cpu.pc, 0x3);
-}
-
-#[test]
-fn ldy_abx() {
-    let mut ram = Ram::create();
-    ram.write(0x0, 0xBC);
-    ram.write(0x1, 0x32);
-    ram.write(0x2, 0x44);
-    ram.write(0x4432 + 0x3, 0x42);
-    let mut cpu = Cpu::create(ram);
-    cpu.x = 0x3;
-    cpu.read_instruction();
-
-    assert_eq!(cpu.y, 0x42);
-    assert_eq!(cpu.pc, 0x3);
-}
-
-#[test]
-fn ldy_zero_flag() {
-    let mut ram = Ram::create();
-    ram.write(0x0, 0xA0);
-    ram.write(0x1, 0x00);
-    ram.write(0x2, 0xA0);
-    ram.write(0x3, 0x01);
-    let mut cpu = Cpu::create(ram);
-
-    cpu.read_instruction();
-    assert!(cpu.zero_flag);
-
-    cpu.read_instruction();
-    assert!(!cpu.zero_flag);
-}
-
-#[test]
-fn ldy_negative_flag() {
-    let mut ram = Ram::create();
-    ram.write(0x0, 0xA0);
-    ram.write(0x1, 0x80);
-    ram.write(0x2, 0xA0);
-    ram.write(0x3, 0x01);
-    let mut cpu = Cpu::create(ram);
-
-    cpu.read_instruction();
-    assert!(cpu.negative_flag);
-
-    cpu.read_instruction();
-    assert!(!cpu.negative_flag);
-}
-
-#[test]
-fn sta_zp() {
-    let mut ram = Ram::create();
-    ram.write(0x0, 0x85);
-    ram.write(0x1, 0x32);
-    let mut cpu = Cpu::create(ram);
-
-    cpu.a = 0x3;
-    cpu.read_instruction();
-
-    assert_eq!(cpu.ram.read(0x32), 0x3);
-    assert_eq!(cpu.pc, 0x2);
-}
-
-#[test]
-fn sta_zpx() {
-    let mut ram = Ram::create();
-    ram.write(0x0, 0x95);
-    ram.write(0x1, 0x32);
-    let mut cpu = Cpu::create(ram);
-
-    cpu.a = 0x3;
-    cpu.x = 0x2;
-    cpu.read_instruction();
-
-    assert_eq!(cpu.ram.read(0x32+0x2), 0x3);
-    assert_eq!(cpu.pc, 0x2);
-}
-
-#[test]
-fn sta_abs() {
-    let mut ram = Ram::create();
-    ram.write(0x0, 0x8D);
-    ram.write(0x1, 0x32);
-    ram.write(0x2, 0x69);
-    let mut cpu = Cpu::create(ram);
-
-    cpu.a = 0x3;
-    cpu.read_instruction();
-
-    assert_eq!(cpu.ram.read(0x6932), 0x3);
-    assert_eq!(cpu.pc, 0x3);
-}
-
-#[test]
-fn sta_abx() {
-    let mut ram = Ram::create();
-    ram.write(0x0, 0x9D);
-    ram.write(0x1, 0x32);
-    ram.write(0x2, 0x69);
-    let mut cpu = Cpu::create(ram);
-
-    cpu.a = 0x3;
-    cpu.x = 0x2;
-    cpu.read_instruction();
-
-    assert_eq!(cpu.ram.read(0x6932 + 0x2), 0x3);
-    assert_eq!(cpu.pc, 0x3);
-}
-
-#[test]
-fn sta_aby() {
-    let mut ram = Ram::create();
-    ram.write(0x0, 0x99);
-    ram.write(0x1, 0x32);
-    ram.write(0x2, 0x69);
-    let mut cpu = Cpu::create(ram);
-
-    cpu.a = 0x3;
-    cpu.y = 0x2;
-    cpu.read_instruction();
-
-    assert_eq!(cpu.ram.read(0x6932 + 0x2), 0x3);
-    assert_eq!(cpu.pc, 0x3);
-}
-
-#[test]
-fn sta_inx() {
-    let mut ram = Ram::create();
-    ram.write(0x0, 0x81);
-    ram.write(0x1, 0x32);
-    ram.write(0x32 + 0x2, 0x44);
-    ram.write(0x33 + 0x2, 0x64);
-    let mut cpu = Cpu::create(ram);
-
-    cpu.a = 0x3;
-    cpu.x = 0x2;
-    cpu.read_instruction();
-
-    assert_eq!(cpu.ram.read(0x6444), 0x3);
-    assert_eq!(cpu.pc, 0x2);
-}
-
-#[test]
-fn sta_iny() {
-    let mut ram = Ram::create();
-    ram.write(0x0, 0x91);
-    ram.write(0x1, 0x32);
-    ram.write(0x32, 0x44);
-    ram.write(0x33, 0x64);
-    let mut cpu = Cpu::create(ram);
-
-    cpu.a = 0x3;
-    cpu.y = 0x2;
-    cpu.read_instruction();
-
-    assert_eq!(cpu.ram.read(0x6444 + 0x2), 0x3);
-    assert_eq!(cpu.pc, 0x2);
-}
-
-#[test]
-fn stx_zp() {
-    let mut ram = Ram::create();
-    ram.write(0x0, 0x86);
-    ram.write(0x1, 0x32);
-    let mut cpu = Cpu::create(ram);
-
-    cpu.x = 0x3;
-    cpu.read_instruction();
-
-    assert_eq!(cpu.ram.read(0x32), 0x3);
-    assert_eq!(cpu.pc, 0x2);
-}
-
-#[test]
-fn stx_zpy() {
-    let mut ram = Ram::create();
-    ram.write(0x0, 0x96);
-    ram.write(0x1, 0x32);
-    let mut cpu = Cpu::create(ram);
-
-    cpu.x = 0x3;
-    cpu.y = 0x2;
-    cpu.read_instruction();
-
-    assert_eq!(cpu.ram.read(0x32+0x2), 0x3);
-    assert_eq!(cpu.pc, 0x2);
-}
-
-#[test]
-fn stx_abs() {
-    let mut ram = Ram::create();
-    ram.write(0x0, 0x8E);
-    ram.write(0x1, 0x32);
-    ram.write(0x2, 0x69);
-    let mut cpu = Cpu::create(ram);
-
-    cpu.x = 0x3;
-    cpu.read_instruction();
-
-    assert_eq!(cpu.ram.read(0x6932), 0x3);
-    assert_eq!(cpu.pc, 0x3);
-}
-
-#[test]
-fn sty_zp() {
-    let mut ram = Ram::create();
-    ram.write(0x0, 0x84);
-    ram.write(0x1, 0x32);
-    let mut cpu = Cpu::create(ram);
-
-    cpu.y = 0x3;
-    cpu.read_instruction();
-
-    assert_eq!(cpu.ram.read(0x32), 0x3);
-    assert_eq!(cpu.pc, 0x2);
-}
-
-#[test]
-fn sty_zpx() {
-    let mut ram = Ram::create();
-    ram.write(0x0, 0x94);
-    ram.write(0x1, 0x32);
-    let mut cpu = Cpu::create(ram);
-
-    cpu.y = 0x3;
-    cpu.x = 0x2;
-    cpu.read_instruction();
-
-    assert_eq!(cpu.ram.read(0x32+0x2), 0x3);
-    assert_eq!(cpu.pc, 0x2);
-}
-
-#[test]
-fn sty_abs() {
-    let mut ram = Ram::create();
-    ram.write(0x0, 0x8C);
-    ram.write(0x1, 0x32);
-    ram.write(0x2, 0x69);
-    let mut cpu = Cpu::create(ram);
-
-    cpu.y = 0x3;
-    cpu.read_instruction();
-
-    assert_eq!(cpu.ram.read(0x6932), 0x3);
-    assert_eq!(cpu.pc, 0x3);
-}
-
-#[test]
-fn tax_imp() {
-    let mut ram = Ram::create();
-    ram.write(0x0, 0xAA);
-    let mut cpu = Cpu::create(ram);
-
-    cpu.a = 0x3;
-    cpu.read_instruction();
-
-    assert_eq!(cpu.x, cpu.a);
-    assert_eq!(cpu.pc, 0x1);
-}
-
-#[test]
-fn tax_zero_flag() {
-    let mut ram = Ram::create();
-    ram.write(0x0, 0xAA);
-    let mut cpu = Cpu::create(ram);
-
-    cpu.a = 0x0;
-    cpu.read_instruction();
-
-    assert!(cpu.zero_flag);
-}
-
-#[test]
-fn tax_negative_flag() {
-    let mut ram = Ram::create();
-    ram.write(0x0, 0xAA);
-    let mut cpu = Cpu::create(ram);
-
-    cpu.a = 0x80;
-    cpu.read_instruction();
-
-    assert!(cpu.negative_flag);
-}
-
-#[test]
-fn tay_imp() {
-    let mut ram = Ram::create();
-    ram.write(0x0, 0xA8);
-    let mut cpu = Cpu::create(ram);
-
-    cpu.a = 0x3;
-    cpu.read_instruction();
-
-    assert_eq!(cpu.y, cpu.a);
-    assert_eq!(cpu.pc, 0x1);
-}
-
-#[test]
-fn tay_zero_flag() {
-    let mut ram = Ram::create();
-    ram.write(0x0, 0xA8);
-    let mut cpu = Cpu::create(ram);
-
-    cpu.a = 0x0;
-    cpu.read_instruction();
-
-    assert!(cpu.zero_flag);
-}
-
-#[test]
-fn tay_negative_flag() {
-    let mut ram = Ram::create();
-    ram.write(0x0, 0xA8);
-    let mut cpu = Cpu::create(ram);
-
-    cpu.a = 0x80;
-    cpu.read_instruction();
-
-    assert!(cpu.negative_flag);
-}
-
-#[test]
-fn txa_imp() {
-    let mut ram = Ram::create();
-    ram.write(0x0, 0x8A);
-    let mut cpu = Cpu::create(ram);
-
-    cpu.x = 0x3;
-    cpu.read_instruction();
-
-    assert_eq!(cpu.a, cpu.x);
-    assert_eq!(cpu.pc, 0x1);
-}
-
-#[test]
-fn txa_zero_flag() {
-    let mut ram = Ram::create();
-    ram.write(0x0, 0x8A);
-    let mut cpu = Cpu::create(ram);
-
-    cpu.x = 0x0;
-    cpu.read_instruction();
-
-    assert!(cpu.zero_flag);
-}
-
-#[test]
-fn txa_negative_flag() {
-    let mut ram = Ram::create();
-    ram.write(0x0, 0x8A);
-    let mut cpu = Cpu::create(ram);
-
-    cpu.x = 0x80;
-    cpu.read_instruction();
-
-    assert!(cpu.negative_flag);
-}
-
-#[test]
-fn tya_imp() {
-    let mut ram = Ram::create();
-    ram.write(0x0, 0x98);
-    let mut cpu = Cpu::create(ram);
-
-    cpu.y = 0x3;
-    cpu.read_instruction();
-
-    assert_eq!(cpu.a, cpu.y);
-    assert_eq!(cpu.pc, 0x1);
-}
-
-#[test]
-fn tya_zero_flag() {
-    let mut ram = Ram::create();
-    ram.write(0x0, 0x98);
-    let mut cpu = Cpu::create(ram);
-
-    cpu.y = 0x0;
-    cpu.read_instruction();
-
-    assert!(cpu.zero_flag);
-}
-
-#[test]
-fn tya_negative_flag() {
-    let mut ram = Ram::create();
-    ram.write(0x0, 0x98);
-    let mut cpu = Cpu::create(ram);
-
-    cpu.y = 0x80;
-    cpu.read_instruction();
-
-    assert!(cpu.negative_flag);
+#[cfg(test)]
+mod test {
+    use crate::ram::Ram;
+    use crate::cpu::Cpu;
+
+    #[test]
+    fn lda_imm() {
+        let mut ram = Ram::create();
+        ram.write(0x0, 0xA9);
+        ram.write(0x1, 0x42);
+        let mut cpu = Cpu::create(ram);
+        cpu.read_instruction();
+
+        assert_eq!(cpu.a, 0x42);
+        assert_eq!(cpu.pc, 0x2);
+    }
+
+    #[test]
+    fn lda_zp() {
+        let mut ram = Ram::create();
+        ram.write(0x0, 0xA5);
+        ram.write(0x1, 0x69);
+        ram.write(0x69, 0x42);
+        let mut cpu = Cpu::create(ram);
+        cpu.read_instruction();
+
+        assert_eq!(cpu.a, 0x42);
+        assert_eq!(cpu.pc, 0x2);
+    }
+
+    #[test]
+    fn lda_zpx() {
+        let mut ram = Ram::create();
+        ram.write(0x0, 0xB5);
+        ram.write(0x1, 0x69);
+        ram.write(0x69 + 0x5, 0x42);
+        let mut cpu = Cpu::create(ram);
+        cpu.x = 0x5;
+        cpu.read_instruction();
+
+        assert_eq!(cpu.a, 0x42);
+        assert_eq!(cpu.pc, 0x2);
+    }
+
+    #[test]
+    fn lda_abs() {
+        let mut ram = Ram::create();
+        ram.write(0x0, 0xAD);
+        ram.write(0x1, 0x32);
+        ram.write(0x2, 0x44);
+        ram.write(0x4432, 0x42);
+        let mut cpu = Cpu::create(ram);
+        cpu.read_instruction();
+
+        assert_eq!(cpu.a, 0x42);
+        assert_eq!(cpu.pc, 0x3);
+    }
+
+    #[test]
+    fn lda_abx() {
+        let mut ram = Ram::create();
+        ram.write(0x0, 0xBD);
+        ram.write(0x1, 0x32);
+        ram.write(0x2, 0x44);
+        ram.write(0x4432 + 0x3, 0x42);
+        let mut cpu = Cpu::create(ram);
+        cpu.x = 0x3;
+        cpu.read_instruction();
+
+        assert_eq!(cpu.a, 0x42);
+        assert_eq!(cpu.pc, 0x3);
+    }
+
+    #[test]
+    fn lda_aby() {
+        let mut ram = Ram::create();
+        ram.write(0x0, 0xB9);
+        ram.write(0x1, 0x32);
+        ram.write(0x2, 0x44);
+        ram.write(0x4432 + 0x3, 0x42);
+        let mut cpu = Cpu::create(ram);
+        cpu.y = 0x3;
+        cpu.read_instruction();
+
+        assert_eq!(cpu.a, 0x42);
+        assert_eq!(cpu.pc, 0x3);
+    }
+
+    #[test]
+    fn lda_inx() {
+        let mut ram = Ram::create();
+        ram.write(0x0, 0xa1);
+        ram.write(0x1, 0x42);
+        ram.write(0x42 + 0x02, 0x69);
+        ram.write(0x43 + 0x02, 0x35);
+        ram.write(0x3569, 0x55);
+        let mut cpu = Cpu::create(ram);
+        cpu.x = 0x2;
+        cpu.read_instruction();
+
+        assert_eq!(cpu.a, 0x55);
+        assert_eq!(cpu.pc, 0x2);
+    }
+
+    #[test]
+    fn lda_iny() {
+        let mut ram = Ram::create();
+        ram.write(0x0, 0xB1);
+        ram.write(0x1, 0x42);
+        ram.write(0x42, 0x69);
+        ram.write(0x43, 0x35);
+        ram.write(0x3569 + 0x2, 0x55);
+        let mut cpu = Cpu::create(ram);
+        cpu.y = 0x2;
+        cpu.read_instruction();
+
+        assert_eq!(cpu.a, 0x55);
+        assert_eq!(cpu.pc, 0x2);
+    }
+
+    #[test]
+    fn lda_zero_flag() {
+        let mut ram = Ram::create();
+        ram.write(0x0, 0xA9);
+        ram.write(0x1, 0x00);
+        ram.write(0x2, 0xA9);
+        ram.write(0x3, 0x01);
+        let mut cpu = Cpu::create(ram);
+
+        cpu.read_instruction();
+        assert!(cpu.zero_flag);
+
+        cpu.read_instruction();
+        assert!(!cpu.zero_flag);
+    }
+
+    #[test]
+    fn lda_negative_flag() {
+        let mut ram = Ram::create();
+        ram.write(0x0, 0xA9);
+        ram.write(0x1, 0x80);
+        ram.write(0x2, 0xA9);
+        ram.write(0x3, 0x01);
+        let mut cpu = Cpu::create(ram);
+
+        cpu.read_instruction();
+        assert!(cpu.negative_flag);
+
+        cpu.read_instruction();
+        assert!(!cpu.negative_flag);
+    }
+
+    #[test]
+    fn ldx_imm() {
+        let mut ram = Ram::create();
+        ram.write(0x0, 0xA2);
+        ram.write(0x1, 0x42);
+        let mut cpu = Cpu::create(ram);
+        cpu.read_instruction();
+
+        assert_eq!(cpu.x, 0x42);
+        assert_eq!(cpu.pc, 0x2);
+    }
+
+    #[test]
+    fn ldx_zp() {
+        let mut ram = Ram::create();
+        ram.write(0x0, 0xA6);
+        ram.write(0x1, 0x69);
+        ram.write(0x69, 0x42);
+        let mut cpu = Cpu::create(ram);
+        cpu.read_instruction();
+
+        assert_eq!(cpu.x, 0x42);
+        assert_eq!(cpu.pc, 0x2);
+    }
+
+    #[test]
+    fn ldx_zpy() {
+        let mut ram = Ram::create();
+        ram.write(0x0, 0xB6);
+        ram.write(0x1, 0x69);
+        ram.write(0x69 + 0x5, 0x42);
+        let mut cpu = Cpu::create(ram);
+        cpu.y = 0x5;
+        cpu.read_instruction();
+
+        assert_eq!(cpu.x, 0x42);
+        assert_eq!(cpu.pc, 0x2);
+    }
+
+    #[test]
+    fn ldx_abs() {
+        let mut ram = Ram::create();
+        ram.write(0x0, 0xAE);
+        ram.write(0x1, 0x32);
+        ram.write(0x2, 0x44);
+        ram.write(0x4432, 0x42);
+        let mut cpu = Cpu::create(ram);
+        cpu.read_instruction();
+
+        assert_eq!(cpu.x, 0x42);
+        assert_eq!(cpu.pc, 0x3);
+    }
+
+    #[test]
+    fn ldx_aby() {
+        let mut ram = Ram::create();
+        ram.write(0x0, 0xBE);
+        ram.write(0x1, 0x32);
+        ram.write(0x2, 0x44);
+        ram.write(0x4432 + 0x3, 0x42);
+        let mut cpu = Cpu::create(ram);
+        cpu.y = 0x3;
+        cpu.read_instruction();
+
+        assert_eq!(cpu.x, 0x42);
+        assert_eq!(cpu.pc, 0x3);
+    }
+
+    #[test]
+    fn ldx_zero_flag() {
+        let mut ram = Ram::create();
+        ram.write(0x0, 0xA2);
+        ram.write(0x1, 0x00);
+        ram.write(0x2, 0xA2);
+        ram.write(0x3, 0x01);
+        let mut cpu = Cpu::create(ram);
+
+        cpu.read_instruction();
+        assert!(cpu.zero_flag);
+
+        cpu.read_instruction();
+        assert!(!cpu.zero_flag);
+    }
+
+    #[test]
+    fn ldx_negative_flag() {
+        let mut ram = Ram::create();
+        ram.write(0x0, 0xA2);
+        ram.write(0x1, 0x80);
+        ram.write(0x2, 0xA2);
+        ram.write(0x3, 0x01);
+        let mut cpu = Cpu::create(ram);
+
+        cpu.read_instruction();
+        assert!(cpu.negative_flag);
+
+        cpu.read_instruction();
+        assert!(!cpu.negative_flag);
+    }
+
+    #[test]
+    fn ldy_imm() {
+        let mut ram = Ram::create();
+        ram.write(0x0, 0xA0);
+        ram.write(0x1, 0x42);
+        let mut cpu = Cpu::create(ram);
+        cpu.read_instruction();
+
+        assert_eq!(cpu.y, 0x42);
+        assert_eq!(cpu.pc, 0x2);
+    }
+
+    #[test]
+    fn ldy_zp() {
+        let mut ram = Ram::create();
+        ram.write(0x0, 0xA4);
+        ram.write(0x1, 0x69);
+        ram.write(0x69, 0x42);
+        let mut cpu = Cpu::create(ram);
+        cpu.read_instruction();
+
+        assert_eq!(cpu.y, 0x42);
+        assert_eq!(cpu.pc, 0x2);
+    }
+
+    #[test]
+    fn ldy_zpx() {
+        let mut ram = Ram::create();
+        ram.write(0x0, 0xB4);
+        ram.write(0x1, 0x69);
+        ram.write(0x69 + 0x5, 0x42);
+        let mut cpu = Cpu::create(ram);
+        cpu.x = 0x5;
+        cpu.read_instruction();
+
+        assert_eq!(cpu.y, 0x42);
+        assert_eq!(cpu.pc, 0x2);
+    }
+
+    #[test]
+    fn ldy_abs() {
+        let mut ram = Ram::create();
+        ram.write(0x0, 0xAC);
+        ram.write(0x1, 0x32);
+        ram.write(0x2, 0x44);
+        ram.write(0x4432, 0x42);
+        let mut cpu = Cpu::create(ram);
+        cpu.read_instruction();
+
+        assert_eq!(cpu.y, 0x42);
+        assert_eq!(cpu.pc, 0x3);
+    }
+
+    #[test]
+    fn ldy_abx() {
+        let mut ram = Ram::create();
+        ram.write(0x0, 0xBC);
+        ram.write(0x1, 0x32);
+        ram.write(0x2, 0x44);
+        ram.write(0x4432 + 0x3, 0x42);
+        let mut cpu = Cpu::create(ram);
+        cpu.x = 0x3;
+        cpu.read_instruction();
+
+        assert_eq!(cpu.y, 0x42);
+        assert_eq!(cpu.pc, 0x3);
+    }
+
+    #[test]
+    fn ldy_zero_flag() {
+        let mut ram = Ram::create();
+        ram.write(0x0, 0xA0);
+        ram.write(0x1, 0x00);
+        ram.write(0x2, 0xA0);
+        ram.write(0x3, 0x01);
+        let mut cpu = Cpu::create(ram);
+
+        cpu.read_instruction();
+        assert!(cpu.zero_flag);
+
+        cpu.read_instruction();
+        assert!(!cpu.zero_flag);
+    }
+
+    #[test]
+    fn ldy_negative_flag() {
+        let mut ram = Ram::create();
+        ram.write(0x0, 0xA0);
+        ram.write(0x1, 0x80);
+        ram.write(0x2, 0xA0);
+        ram.write(0x3, 0x01);
+        let mut cpu = Cpu::create(ram);
+
+        cpu.read_instruction();
+        assert!(cpu.negative_flag);
+
+        cpu.read_instruction();
+        assert!(!cpu.negative_flag);
+    }
+
+    #[test]
+    fn sta_zp() {
+        let mut ram = Ram::create();
+        ram.write(0x0, 0x85);
+        ram.write(0x1, 0x32);
+        let mut cpu = Cpu::create(ram);
+
+        cpu.a = 0x3;
+        cpu.read_instruction();
+
+        assert_eq!(cpu.ram.read(0x32), 0x3);
+        assert_eq!(cpu.pc, 0x2);
+    }
+
+    #[test]
+    fn sta_zpx() {
+        let mut ram = Ram::create();
+        ram.write(0x0, 0x95);
+        ram.write(0x1, 0x32);
+        let mut cpu = Cpu::create(ram);
+
+        cpu.a = 0x3;
+        cpu.x = 0x2;
+        cpu.read_instruction();
+
+        assert_eq!(cpu.ram.read(0x32+0x2), 0x3);
+        assert_eq!(cpu.pc, 0x2);
+    }
+
+    #[test]
+    fn sta_abs() {
+        let mut ram = Ram::create();
+        ram.write(0x0, 0x8D);
+        ram.write(0x1, 0x32);
+        ram.write(0x2, 0x69);
+        let mut cpu = Cpu::create(ram);
+
+        cpu.a = 0x3;
+        cpu.read_instruction();
+
+        assert_eq!(cpu.ram.read(0x6932), 0x3);
+        assert_eq!(cpu.pc, 0x3);
+    }
+
+    #[test]
+    fn sta_abx() {
+        let mut ram = Ram::create();
+        ram.write(0x0, 0x9D);
+        ram.write(0x1, 0x32);
+        ram.write(0x2, 0x69);
+        let mut cpu = Cpu::create(ram);
+
+        cpu.a = 0x3;
+        cpu.x = 0x2;
+        cpu.read_instruction();
+
+        assert_eq!(cpu.ram.read(0x6932 + 0x2), 0x3);
+        assert_eq!(cpu.pc, 0x3);
+    }
+
+    #[test]
+    fn sta_aby() {
+        let mut ram = Ram::create();
+        ram.write(0x0, 0x99);
+        ram.write(0x1, 0x32);
+        ram.write(0x2, 0x69);
+        let mut cpu = Cpu::create(ram);
+
+        cpu.a = 0x3;
+        cpu.y = 0x2;
+        cpu.read_instruction();
+
+        assert_eq!(cpu.ram.read(0x6932 + 0x2), 0x3);
+        assert_eq!(cpu.pc, 0x3);
+    }
+
+    #[test]
+    fn sta_inx() {
+        let mut ram = Ram::create();
+        ram.write(0x0, 0x81);
+        ram.write(0x1, 0x32);
+        ram.write(0x32 + 0x2, 0x44);
+        ram.write(0x33 + 0x2, 0x64);
+        let mut cpu = Cpu::create(ram);
+
+        cpu.a = 0x3;
+        cpu.x = 0x2;
+        cpu.read_instruction();
+
+        assert_eq!(cpu.ram.read(0x6444), 0x3);
+        assert_eq!(cpu.pc, 0x2);
+    }
+
+    #[test]
+    fn sta_iny() {
+        let mut ram = Ram::create();
+        ram.write(0x0, 0x91);
+        ram.write(0x1, 0x32);
+        ram.write(0x32, 0x44);
+        ram.write(0x33, 0x64);
+        let mut cpu = Cpu::create(ram);
+
+        cpu.a = 0x3;
+        cpu.y = 0x2;
+        cpu.read_instruction();
+
+        assert_eq!(cpu.ram.read(0x6444 + 0x2), 0x3);
+        assert_eq!(cpu.pc, 0x2);
+    }
+
+    #[test]
+    fn stx_zp() {
+        let mut ram = Ram::create();
+        ram.write(0x0, 0x86);
+        ram.write(0x1, 0x32);
+        let mut cpu = Cpu::create(ram);
+
+        cpu.x = 0x3;
+        cpu.read_instruction();
+
+        assert_eq!(cpu.ram.read(0x32), 0x3);
+        assert_eq!(cpu.pc, 0x2);
+    }
+
+    #[test]
+    fn stx_zpy() {
+        let mut ram = Ram::create();
+        ram.write(0x0, 0x96);
+        ram.write(0x1, 0x32);
+        let mut cpu = Cpu::create(ram);
+
+        cpu.x = 0x3;
+        cpu.y = 0x2;
+        cpu.read_instruction();
+
+        assert_eq!(cpu.ram.read(0x32+0x2), 0x3);
+        assert_eq!(cpu.pc, 0x2);
+    }
+
+    #[test]
+    fn stx_abs() {
+        let mut ram = Ram::create();
+        ram.write(0x0, 0x8E);
+        ram.write(0x1, 0x32);
+        ram.write(0x2, 0x69);
+        let mut cpu = Cpu::create(ram);
+
+        cpu.x = 0x3;
+        cpu.read_instruction();
+
+        assert_eq!(cpu.ram.read(0x6932), 0x3);
+        assert_eq!(cpu.pc, 0x3);
+    }
+
+    #[test]
+    fn sty_zp() {
+        let mut ram = Ram::create();
+        ram.write(0x0, 0x84);
+        ram.write(0x1, 0x32);
+        let mut cpu = Cpu::create(ram);
+
+        cpu.y = 0x3;
+        cpu.read_instruction();
+
+        assert_eq!(cpu.ram.read(0x32), 0x3);
+        assert_eq!(cpu.pc, 0x2);
+    }
+
+    #[test]
+    fn sty_zpx() {
+        let mut ram = Ram::create();
+        ram.write(0x0, 0x94);
+        ram.write(0x1, 0x32);
+        let mut cpu = Cpu::create(ram);
+
+        cpu.y = 0x3;
+        cpu.x = 0x2;
+        cpu.read_instruction();
+
+        assert_eq!(cpu.ram.read(0x32+0x2), 0x3);
+        assert_eq!(cpu.pc, 0x2);
+    }
+
+    #[test]
+    fn sty_abs() {
+        let mut ram = Ram::create();
+        ram.write(0x0, 0x8C);
+        ram.write(0x1, 0x32);
+        ram.write(0x2, 0x69);
+        let mut cpu = Cpu::create(ram);
+
+        cpu.y = 0x3;
+        cpu.read_instruction();
+
+        assert_eq!(cpu.ram.read(0x6932), 0x3);
+        assert_eq!(cpu.pc, 0x3);
+    }
+
+    #[test]
+    fn tax_imp() {
+        let mut ram = Ram::create();
+        ram.write(0x0, 0xAA);
+        let mut cpu = Cpu::create(ram);
+
+        cpu.a = 0x3;
+        cpu.read_instruction();
+
+        assert_eq!(cpu.x, cpu.a);
+        assert_eq!(cpu.pc, 0x1);
+    }
+
+    #[test]
+    fn tax_zero_flag() {
+        let mut ram = Ram::create();
+        ram.write(0x0, 0xAA);
+        let mut cpu = Cpu::create(ram);
+
+        cpu.a = 0x0;
+        cpu.read_instruction();
+
+        assert!(cpu.zero_flag);
+    }
+
+    #[test]
+    fn tax_negative_flag() {
+        let mut ram = Ram::create();
+        ram.write(0x0, 0xAA);
+        let mut cpu = Cpu::create(ram);
+
+        cpu.a = 0x80;
+        cpu.read_instruction();
+
+        assert!(cpu.negative_flag);
+    }
+
+    #[test]
+    fn tay_imp() {
+        let mut ram = Ram::create();
+        ram.write(0x0, 0xA8);
+        let mut cpu = Cpu::create(ram);
+
+        cpu.a = 0x3;
+        cpu.read_instruction();
+
+        assert_eq!(cpu.y, cpu.a);
+        assert_eq!(cpu.pc, 0x1);
+    }
+
+    #[test]
+    fn tay_zero_flag() {
+        let mut ram = Ram::create();
+        ram.write(0x0, 0xA8);
+        let mut cpu = Cpu::create(ram);
+
+        cpu.a = 0x0;
+        cpu.read_instruction();
+
+        assert!(cpu.zero_flag);
+    }
+
+    #[test]
+    fn tay_negative_flag() {
+        let mut ram = Ram::create();
+        ram.write(0x0, 0xA8);
+        let mut cpu = Cpu::create(ram);
+
+        cpu.a = 0x80;
+        cpu.read_instruction();
+
+        assert!(cpu.negative_flag);
+    }
+
+    #[test]
+    fn txa_imp() {
+        let mut ram = Ram::create();
+        ram.write(0x0, 0x8A);
+        let mut cpu = Cpu::create(ram);
+
+        cpu.x = 0x3;
+        cpu.read_instruction();
+
+        assert_eq!(cpu.a, cpu.x);
+        assert_eq!(cpu.pc, 0x1);
+    }
+
+    #[test]
+    fn txa_zero_flag() {
+        let mut ram = Ram::create();
+        ram.write(0x0, 0x8A);
+        let mut cpu = Cpu::create(ram);
+
+        cpu.x = 0x0;
+        cpu.read_instruction();
+
+        assert!(cpu.zero_flag);
+    }
+
+    #[test]
+    fn txa_negative_flag() {
+        let mut ram = Ram::create();
+        ram.write(0x0, 0x8A);
+        let mut cpu = Cpu::create(ram);
+
+        cpu.x = 0x80;
+        cpu.read_instruction();
+
+        assert!(cpu.negative_flag);
+    }
+
+    #[test]
+    fn tya_imp() {
+        let mut ram = Ram::create();
+        ram.write(0x0, 0x98);
+        let mut cpu = Cpu::create(ram);
+
+        cpu.y = 0x3;
+        cpu.read_instruction();
+
+        assert_eq!(cpu.a, cpu.y);
+        assert_eq!(cpu.pc, 0x1);
+    }
+
+    #[test]
+    fn tya_zero_flag() {
+        let mut ram = Ram::create();
+        ram.write(0x0, 0x98);
+        let mut cpu = Cpu::create(ram);
+
+        cpu.y = 0x0;
+        cpu.read_instruction();
+
+        assert!(cpu.zero_flag);
+    }
+
+    #[test]
+    fn tya_negative_flag() {
+        let mut ram = Ram::create();
+        ram.write(0x0, 0x98);
+        let mut cpu = Cpu::create(ram);
+
+        cpu.y = 0x80;
+        cpu.read_instruction();
+
+        assert!(cpu.negative_flag);
+    }
 }
