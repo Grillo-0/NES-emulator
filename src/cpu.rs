@@ -20,6 +20,20 @@ pub struct Cpu {
 
 }
 
+macro_rules! instr {
+    ($instruction:ident-imp) => {
+        |cpu: &mut Cpu| {
+            cpu.$instruction();
+        }
+    };
+    ($instruction:ident-$addr_mode:ident) => {
+        |cpu: &mut Cpu| {
+            let addr = cpu.$addr_mode();
+            cpu.$instruction(addr);
+        }
+    }
+}
+
 impl Cpu {
     pub fn create(ram: Ram) -> Cpu {
         Cpu {
@@ -41,49 +55,49 @@ impl Cpu {
     fn get_instruction(&mut self, opcode: u8) -> fn(&mut Cpu) {
         match opcode {
             // LDA
-            0xA9 => Self::lda_imm,
-            0xA5 => Self::lda_zp,
-            0xB5 => Self::lda_zpx,
-            0xAD => Self::lda_abs,
-            0xBD => Self::lda_abx,
-            0xB9 => Self::lda_aby,
-            0xA1 => Self::lda_inx,
-            0xB1 => Self::lda_iny,
+            0xA9 => instr!(lda-imm),
+            0xA5 => instr!(lda-zp),
+            0xB5 => instr!(lda-zpx),
+            0xAD => instr!(lda-abs),
+            0xBD => instr!(lda-abx),
+            0xB9 => instr!(lda-aby),
+            0xA1 => instr!(lda-inx),
+            0xB1 => instr!(lda-iny),
 
             // LDX
-            0xA2 => Self::ldx_imm,
-            0xA6 => Self::ldx_zp,
-            0xB6 => Self::ldx_zpy,
-            0xAE => Self::ldx_abs,
-            0xBE => Self::ldx_aby,
+            0xA2 => instr!(ldx-imm),
+            0xA6 => instr!(ldx-zp),
+            0xB6 => instr!(ldx-zpy),
+            0xAE => instr!(ldx-abs),
+            0xBE => instr!(ldx-aby),
 
             // LDY
-            0xA0 => Self::ldy_imm,
-            0xA4 => Self::ldy_zp,
-            0xB4 => Self::ldy_zpx,
-            0xAC => Self::ldy_abs,
-            0xBC => Self::ldy_abx,
+            0xA0 => instr!(ldy-imm),
+            0xA4 => instr!(ldy-zp),
+            0xB4 => instr!(ldy-zpx),
+            0xAC => instr!(ldy-abs),
+            0xBC => instr!(ldy-abx),
 
             //STA
-            0x85 => Self::sta_zp,
-            0x95 => Self::sta_zpx,
-            0x8D => Self::sta_abs,
-            0x9D => Self::sta_abx,
-            0x99 => Self::sta_aby,
-            0x81 => Self::sta_inx,
-            0x91 => Self::sta_iny,
+            0x85 => instr!(sta-zp),
+            0x95 => instr!(sta-zpx),
+            0x8D => instr!(sta-abs),
+            0x9D => instr!(sta-abx),
+            0x99 => instr!(sta-aby),
+            0x81 => instr!(sta-inx),
+            0x91 => instr!(sta-iny),
 
             //STX
-            0x86 => Self::stx_zp,
-            0x96 => Self::stx_zpy,
-            0x8E => Self::stx_abs,
+            0x86 => instr!(stx-zp),
+            0x96 => instr!(stx-zpy),
+            0x8E => instr!(stx-abs),
 
             //STY
-            0x84 => Self::sty_zp,
-            0x94 => Self::sty_zpx,
-            0x8C => Self::sty_abs,
+            0x84 => instr!(sty-zp),
+            0x94 => instr!(sty-zpx),
+            0x8C => instr!(sty-abs),
 
-            _ => unimplemented!("{} opcode not implemented yet!\n", opcode),
+            _ => unimplemented!("{:#04X} opcode not implemented yet!\n", opcode),
         }
     }
 
@@ -144,8 +158,7 @@ impl Cpu {
         addr + self.y as u16
     }
 
-    fn lda_imm(&mut self) {
-        let addr = self.imm();
+    fn lda(&mut self, addr: u16) {
         self.a = self.ram.read(addr);
 
         self.zero_flag = self.a == 0;
@@ -154,262 +167,37 @@ impl Cpu {
         self.pc += 1;
     }
 
-    fn lda_zp(&mut self) {
-        let addr = self.zp();
-        self.a = self.ram.read(addr);
-
-        self.zero_flag = self.a == 0;
-        self.negative_flag = (self.a >> 7) == 1;
-
-        self.pc += 1;
-    }
-
-    fn lda_zpx(&mut self) {
-        let addr = self.zpx();
-        self.a = self.ram.read(addr);
-
-        self.zero_flag = self.a == 0;
-        self.negative_flag = (self.a >> 7) == 1;
-
-        self.pc += 1;
-    }
-
-    fn lda_abs(&mut self) {
-        let addr = self.abs();
-        self.a = self.ram.read(addr);
-
-        self.zero_flag = self.a == 0;
-        self.negative_flag = (self.a >> 7) == 1;
-
-        self.pc += 1;
-    }
-
-    fn lda_abx(&mut self) {
-        let addr = self.abx();
-        self.a = self.ram.read(addr);
-
-        self.zero_flag = self.a == 0;
-        self.negative_flag = (self.a >> 7) == 1;
-
-        self.pc += 1;
-    }
-
-    fn lda_aby(&mut self) {
-        let addr = self.aby();
-        self.a = self.ram.read(addr);
-
-        self.zero_flag = self.a == 0;
-        self.negative_flag = (self.a >> 7) == 1;
-
-        self.pc += 1;
-    }
-
-    fn lda_inx(&mut self) {
-        let addr = self.inx();
-        self.a = self.ram.read(addr);
-
-        self.zero_flag = self.a == 0;
-        self.negative_flag = (self.a >> 7) == 1;
-
-        self.pc += 1;
-    }
-
-    fn lda_iny(&mut self) {
-        let addr = self.iny();
-        self.a = self.ram.read(addr);
-
-        self.zero_flag = self.a == 0;
-        self.negative_flag = (self.a >> 7) == 1;
-
-        self.pc += 1;
-    }
-
-    fn ldx_imm(&mut self) {
-        let addr = self.imm();
+    fn ldx(&mut self, addr: u16) {
         self.x = self.ram.read(addr);
 
         self.zero_flag = self.x == 0;
-        self.negative_flag = (self.x >>  7) == 1;
+        self.negative_flag = (self.x >> 7) == 1;
 
         self.pc += 1;
     }
 
-    fn ldx_zp(&mut self) {
-        let addr = self.zp();
-        self.x = self.ram.read(addr);
-
-        self.zero_flag = self.x == 0;
-        self.negative_flag = (self.x >>  7) == 1;
-
-        self.pc += 1;
-    }
-
-    fn ldx_zpy(&mut self) {
-        let addr = self.zpy();
-        self.x = self.ram.read(addr);
-
-        self.zero_flag = self.x == 0;
-        self.negative_flag = (self.x >>  7) == 1;
-
-        self.pc += 1;
-    }
-
-    fn ldx_abs(&mut self) {
-        let addr = self.abs();
-        self.x = self.ram.read(addr);
-
-        self.zero_flag = self.x == 0;
-        self.negative_flag = (self.x >>  7) == 1;
-
-        self.pc += 1;
-    }
-
-    fn ldx_aby(&mut self) {
-        let addr = self.aby();
-        self.x = self.ram.read(addr);
-
-        self.zero_flag = self.x == 0;
-        self.negative_flag = (self.x >>  7) == 1;
-
-        self.pc += 1;
-    }
-
-    fn ldy_imm(&mut self) {
-        let addr = self.imm();
+    fn ldy(&mut self, addr: u16) {
         self.y = self.ram.read(addr);
 
         self.zero_flag = self.y == 0;
-        self.negative_flag = (self.y >>  7) == 1;
+        self.negative_flag = (self.y >> 7) == 1;
 
         self.pc += 1;
     }
 
-    fn ldy_zp(&mut self) {
-        let addr = self.zp();
-        self.y = self.ram.read(addr);
-
-        self.zero_flag = self.y == 0;
-        self.negative_flag = (self.y >>  7) == 1;
-
-        self.pc += 1;
-    }
-
-    fn ldy_zpx(&mut self) {
-        let addr = self.zpx();
-        self.y = self.ram.read(addr);
-
-        self.zero_flag = self.y == 0;
-        self.negative_flag = (self.y >>  7) == 1;
-
-        self.pc += 1;
-    }
-
-    fn ldy_abs(&mut self) {
-        let addr = self.abs();
-        self.y = self.ram.read(addr);
-
-        self.zero_flag = self.y == 0;
-        self.negative_flag = (self.y >>  7) == 1;
-
-        self.pc += 1;
-    }
-
-    fn ldy_abx(&mut self) {
-        let addr = self.abx();
-        self.y = self.ram.read(addr);
-
-        self.zero_flag = self.y == 0;
-        self.negative_flag = (self.y >>  7) == 1;
-
-        self.pc += 1;
-    }
-
-    fn sta_zp(&mut self) {
-        let addr = self.zp();
+    fn sta(&mut self, addr: u16) {
         self.ram.write(addr, self.a);
 
         self.pc += 1;
     }
 
-    fn sta_zpx(&mut self) {
-        let addr = self.zpx();
-        self.ram.write(addr, self.a);
-
-        self.pc += 1;
-    }
-
-    fn sta_abs(&mut self) {
-        let addr = self.abs();
-        self.ram.write(addr, self.a);
-
-        self.pc += 1;
-    }
-
-    fn sta_abx(&mut self) {
-        let addr = self.abx();
-        self.ram.write(addr, self.a);
-
-        self.pc += 1;
-    }
-
-    fn sta_aby(&mut self) {
-        let addr = self.aby();
-        self.ram.write(addr, self.a);
-
-        self.pc += 1;
-    }
-
-    fn sta_inx(&mut self) {
-        let addr = self.inx();
-        self.ram.write(addr, self.a);
-
-        self.pc += 1;
-    }
-
-    fn sta_iny(&mut self) {
-        let addr = self.iny();
-        self.ram.write(addr, self.a);
-
-        self.pc += 1;
-    }
-
-    fn stx_zp(&mut self) {
-        let addr = self.zp();
+    fn stx(&mut self, addr: u16) {
         self.ram.write(addr, self.x);
 
         self.pc += 1;
     }
 
-    fn stx_zpy(&mut self) {
-        let addr = self.zpy();
-        self.ram.write(addr, self.x);
-
-        self.pc += 1;
-    }
-
-    fn stx_abs(&mut self) {
-        let addr = self.abs();
-        self.ram.write(addr, self.x);
-
-        self.pc += 1;
-    }
-
-    fn sty_zp(&mut self) {
-        let addr = self.zp();
-        self.ram.write(addr, self.y);
-
-        self.pc += 1;
-    }
-
-    fn sty_zpx(&mut self) {
-        let addr = self.zpx();
-        self.ram.write(addr, self.y);
-
-        self.pc += 1;
-    }
-
-    fn sty_abs(&mut self) {
-        let addr = self.abs();
+    fn sty(&mut self, addr: u16) {
         self.ram.write(addr, self.y);
 
         self.pc += 1;
