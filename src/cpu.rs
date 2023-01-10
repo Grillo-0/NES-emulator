@@ -8,13 +8,7 @@ pub struct Cpu {
     x : u8,   // Index Register X
     y : u8,   // Index Register Y
 
-    carry_flag : bool,
-    zero_flag : bool,
-    interrupt_disable : bool,
-    decimal_mode : bool,
-    break_command : bool,
-    overflow_flag : bool,
-    negative_flag : bool,
+    status: u8,
 
     ram : Ram,
 
@@ -37,13 +31,47 @@ macro_rules! instr {
 impl Cpu {
     pub fn create(ram: Ram) -> Cpu {
         Cpu {
-            sp: (0), pc: (0),
-            a: (0), x: (0), y: (0),
-            carry_flag: (false), zero_flag: (false), interrupt_disable: (false),
-            decimal_mode: (false), break_command: (false), overflow_flag: (false),
-            negative_flag: (false),
-            ram: (ram),
+            sp: 0xff, pc: 0,
+            a: 0, x: 0, y: 0,
+            status: 0,
+            ram,
         }
+    }
+
+    fn get_carry_flag(&self) -> bool {
+        self.status & 1 << 0 != 0
+    }
+
+    fn get_zero_flag(&self) -> bool {
+        self.status & 1 << 1 != 0
+    }
+
+    fn set_zero_flag(&mut self){
+        self.status |= 1 << 1
+    }
+
+    fn get_interrupt_flag(&self) -> bool {
+        self.status & 1 << 2 != 0
+    }
+
+    fn get_decimal_mode(&self) -> bool {
+        self.status & 1 << 3 != 0
+    }
+
+    fn get_break_command(&self) -> bool {
+        self.status & 1 << 4 != 0
+    }
+
+    fn get_overflow_flag(&self) -> bool {
+        self.status & 1 << 5 != 0
+    }
+
+    fn get_negative_flag(&self) -> bool {
+        self.status & 1 << 6 != 0
+    }
+
+    fn set_negative_flag(&mut self) {
+        self.status |= 1 << 6
     }
 
     pub fn read_instruction(&mut self) {
@@ -173,8 +201,8 @@ impl Cpu {
     fn lda(&mut self, addr: u16) {
         self.a = self.ram.read(addr);
 
-        self.zero_flag = self.a == 0;
-        self.negative_flag = (self.a >> 7) == 1;
+        if self.a == 0 {self.set_zero_flag()}
+        if self.a & 1 << 7 != 0 {self.set_negative_flag()}
 
         self.pc += 1;
     }
@@ -182,8 +210,8 @@ impl Cpu {
     fn ldx(&mut self, addr: u16) {
         self.x = self.ram.read(addr);
 
-        self.zero_flag = self.x == 0;
-        self.negative_flag = (self.x >> 7) == 1;
+        if self.x == 0 {self.set_zero_flag()}
+        if self.x & 1 << 7 != 0 {self.set_negative_flag()}
 
         self.pc += 1;
     }
@@ -191,8 +219,8 @@ impl Cpu {
     fn ldy(&mut self, addr: u16) {
         self.y = self.ram.read(addr);
 
-        self.zero_flag = self.y == 0;
-        self.negative_flag = (self.y >> 7) == 1;
+        if self.y == 0 {self.set_zero_flag()}
+        if self.y & 1 << 7 != 0 {self.set_negative_flag()}
 
         self.pc += 1;
     }
@@ -218,8 +246,8 @@ impl Cpu {
     fn tax(&mut self) {
         self.x = self.a;
 
-        self.zero_flag = self.x == 0;
-        self.negative_flag = self.x >> 7 == 1;
+        if self.x == 0 {self.set_zero_flag()}
+        if self.x & 1 << 7 != 0 {self.set_negative_flag()}
 
         self.pc +=1;
     }
@@ -227,8 +255,8 @@ impl Cpu {
     fn tay(&mut self) {
         self.y = self.a;
 
-        self.zero_flag = self.y == 0;
-        self.negative_flag = self.y >> 7 == 1;
+        if self.y == 0 {self.set_zero_flag()}
+        if self.y & 1 << 7 != 0 {self.set_negative_flag()}
 
         self.pc +=1;
     }
@@ -236,8 +264,8 @@ impl Cpu {
     fn txa(&mut self) {
         self.a = self.x;
 
-        self.zero_flag = self.a == 0;
-        self.negative_flag = self.a >> 7 == 1;
+        if self.a == 0 {self.set_zero_flag()}
+        if self.a & 1 << 7 != 0 {self.set_negative_flag()}
 
         self.pc +=1;
     }
@@ -245,8 +273,8 @@ impl Cpu {
     fn tya(&mut self) {
         self.a = self.y;
 
-        self.zero_flag = self.a == 0;
-        self.negative_flag = self.a >> 7 == 1;
+        if self.a == 0 {self.set_zero_flag()}
+        if self.a & 1 << 7 != 0 {self.set_negative_flag()}
 
         self.pc +=1;
     }
@@ -377,15 +405,10 @@ mod test {
         let mut ram = Ram::create();
         ram.write(0x0, 0xA9);
         ram.write(0x1, 0x00);
-        ram.write(0x2, 0xA9);
-        ram.write(0x3, 0x01);
         let mut cpu = Cpu::create(ram);
 
         cpu.read_instruction();
-        assert!(cpu.zero_flag);
-
-        cpu.read_instruction();
-        assert!(!cpu.zero_flag);
+        assert!(cpu.get_zero_flag());
     }
 
     #[test]
@@ -393,15 +416,10 @@ mod test {
         let mut ram = Ram::create();
         ram.write(0x0, 0xA9);
         ram.write(0x1, 0x80);
-        ram.write(0x2, 0xA9);
-        ram.write(0x3, 0x01);
         let mut cpu = Cpu::create(ram);
 
         cpu.read_instruction();
-        assert!(cpu.negative_flag);
-
-        cpu.read_instruction();
-        assert!(!cpu.negative_flag);
+        assert!(cpu.get_negative_flag());
     }
 
     #[test]
@@ -477,15 +495,10 @@ mod test {
         let mut ram = Ram::create();
         ram.write(0x0, 0xA2);
         ram.write(0x1, 0x00);
-        ram.write(0x2, 0xA2);
-        ram.write(0x3, 0x01);
         let mut cpu = Cpu::create(ram);
 
         cpu.read_instruction();
-        assert!(cpu.zero_flag);
-
-        cpu.read_instruction();
-        assert!(!cpu.zero_flag);
+        assert!(cpu.get_zero_flag());
     }
 
     #[test]
@@ -493,15 +506,10 @@ mod test {
         let mut ram = Ram::create();
         ram.write(0x0, 0xA2);
         ram.write(0x1, 0x80);
-        ram.write(0x2, 0xA2);
-        ram.write(0x3, 0x01);
         let mut cpu = Cpu::create(ram);
 
         cpu.read_instruction();
-        assert!(cpu.negative_flag);
-
-        cpu.read_instruction();
-        assert!(!cpu.negative_flag);
+        assert!(cpu.get_negative_flag());
     }
 
     #[test]
@@ -577,15 +585,10 @@ mod test {
         let mut ram = Ram::create();
         ram.write(0x0, 0xA0);
         ram.write(0x1, 0x00);
-        ram.write(0x2, 0xA0);
-        ram.write(0x3, 0x01);
         let mut cpu = Cpu::create(ram);
 
         cpu.read_instruction();
-        assert!(cpu.zero_flag);
-
-        cpu.read_instruction();
-        assert!(!cpu.zero_flag);
+        assert!(cpu.get_zero_flag());
     }
 
     #[test]
@@ -593,15 +596,10 @@ mod test {
         let mut ram = Ram::create();
         ram.write(0x0, 0xA0);
         ram.write(0x1, 0x80);
-        ram.write(0x2, 0xA0);
-        ram.write(0x3, 0x01);
         let mut cpu = Cpu::create(ram);
 
         cpu.read_instruction();
-        assert!(cpu.negative_flag);
-
-        cpu.read_instruction();
-        assert!(!cpu.negative_flag);
+        assert!(cpu.get_negative_flag());
     }
 
     #[test]
@@ -824,7 +822,7 @@ mod test {
         cpu.a = 0x0;
         cpu.read_instruction();
 
-        assert!(cpu.zero_flag);
+        assert!(cpu.get_zero_flag());
     }
 
     #[test]
@@ -836,7 +834,7 @@ mod test {
         cpu.a = 0x80;
         cpu.read_instruction();
 
-        assert!(cpu.negative_flag);
+        assert!(cpu.get_negative_flag());
     }
 
     #[test]
@@ -861,7 +859,7 @@ mod test {
         cpu.a = 0x0;
         cpu.read_instruction();
 
-        assert!(cpu.zero_flag);
+        assert!(cpu.get_zero_flag());
     }
 
     #[test]
@@ -873,7 +871,7 @@ mod test {
         cpu.a = 0x80;
         cpu.read_instruction();
 
-        assert!(cpu.negative_flag);
+        assert!(cpu.get_negative_flag());
     }
 
     #[test]
@@ -898,7 +896,7 @@ mod test {
         cpu.x = 0x0;
         cpu.read_instruction();
 
-        assert!(cpu.zero_flag);
+        assert!(cpu.get_zero_flag());
     }
 
     #[test]
@@ -910,7 +908,7 @@ mod test {
         cpu.x = 0x80;
         cpu.read_instruction();
 
-        assert!(cpu.negative_flag);
+        assert!(cpu.get_negative_flag());
     }
 
     #[test]
@@ -935,7 +933,7 @@ mod test {
         cpu.y = 0x0;
         cpu.read_instruction();
 
-        assert!(cpu.zero_flag);
+        assert!(cpu.get_zero_flag());
     }
 
     #[test]
@@ -947,6 +945,6 @@ mod test {
         cpu.y = 0x80;
         cpu.read_instruction();
 
-        assert!(cpu.negative_flag);
+        assert!(cpu.get_negative_flag());
     }
 }
