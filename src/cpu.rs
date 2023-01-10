@@ -97,6 +97,18 @@ impl Cpu {
             0x94 => instr!(sty-zpx),
             0x8C => instr!(sty-abs),
 
+            //TAX
+            0xAA => instr!(tax-imp),
+
+            //TAY
+            0xA8 => instr!(tay-imp),
+
+            //TXA
+            0x8A => instr!(txa-imp),
+
+            //TYA
+            0x98 => instr!(tya-imp),
+
             _ => unimplemented!("{:#04X} opcode not implemented yet!\n", opcode),
         }
     }
@@ -201,6 +213,42 @@ impl Cpu {
         self.ram.write(addr, self.y);
 
         self.pc += 1;
+    }
+
+    fn tax(&mut self) {
+        self.x = self.a;
+
+        self.zero_flag = self.x == 0;
+        self.negative_flag = self.x >> 7 == 1;
+
+        self.pc +=1;
+    }
+
+    fn tay(&mut self) {
+        self.y = self.a;
+
+        self.zero_flag = self.y == 0;
+        self.negative_flag = self.y >> 7 == 1;
+
+        self.pc +=1;
+    }
+
+    fn txa(&mut self) {
+        self.a = self.x;
+
+        self.zero_flag = self.a == 0;
+        self.negative_flag = self.a >> 7 == 1;
+
+        self.pc +=1;
+    }
+
+    fn tya(&mut self) {
+        self.a = self.y;
+
+        self.zero_flag = self.a == 0;
+        self.negative_flag = self.a >> 7 == 1;
+
+        self.pc +=1;
     }
 }
 
@@ -747,4 +795,152 @@ fn sty_abs() {
 
     assert_eq!(cpu.ram.read(0x6932), 0x3);
     assert_eq!(cpu.pc, 0x3);
+}
+
+#[test]
+fn tax_imp() {
+    let mut ram = Ram::create();
+    ram.write(0x0, 0xAA);
+    let mut cpu = Cpu::create(ram);
+
+    cpu.a = 0x3;
+    cpu.read_instruction();
+
+    assert_eq!(cpu.x, cpu.a);
+    assert_eq!(cpu.pc, 0x1);
+}
+
+#[test]
+fn tax_zero_flag() {
+    let mut ram = Ram::create();
+    ram.write(0x0, 0xAA);
+    let mut cpu = Cpu::create(ram);
+
+    cpu.a = 0x0;
+    cpu.read_instruction();
+
+    assert!(cpu.zero_flag);
+}
+
+#[test]
+fn tax_negative_flag() {
+    let mut ram = Ram::create();
+    ram.write(0x0, 0xAA);
+    let mut cpu = Cpu::create(ram);
+
+    cpu.a = 0x80;
+    cpu.read_instruction();
+
+    assert!(cpu.negative_flag);
+}
+
+#[test]
+fn tay_imp() {
+    let mut ram = Ram::create();
+    ram.write(0x0, 0xA8);
+    let mut cpu = Cpu::create(ram);
+
+    cpu.a = 0x3;
+    cpu.read_instruction();
+
+    assert_eq!(cpu.y, cpu.a);
+    assert_eq!(cpu.pc, 0x1);
+}
+
+#[test]
+fn tay_zero_flag() {
+    let mut ram = Ram::create();
+    ram.write(0x0, 0xA8);
+    let mut cpu = Cpu::create(ram);
+
+    cpu.a = 0x0;
+    cpu.read_instruction();
+
+    assert!(cpu.zero_flag);
+}
+
+#[test]
+fn tay_negative_flag() {
+    let mut ram = Ram::create();
+    ram.write(0x0, 0xA8);
+    let mut cpu = Cpu::create(ram);
+
+    cpu.a = 0x80;
+    cpu.read_instruction();
+
+    assert!(cpu.negative_flag);
+}
+
+#[test]
+fn txa_imp() {
+    let mut ram = Ram::create();
+    ram.write(0x0, 0x8A);
+    let mut cpu = Cpu::create(ram);
+
+    cpu.x = 0x3;
+    cpu.read_instruction();
+
+    assert_eq!(cpu.a, cpu.x);
+    assert_eq!(cpu.pc, 0x1);
+}
+
+#[test]
+fn txa_zero_flag() {
+    let mut ram = Ram::create();
+    ram.write(0x0, 0x8A);
+    let mut cpu = Cpu::create(ram);
+
+    cpu.x = 0x0;
+    cpu.read_instruction();
+
+    assert!(cpu.zero_flag);
+}
+
+#[test]
+fn txa_negative_flag() {
+    let mut ram = Ram::create();
+    ram.write(0x0, 0x8A);
+    let mut cpu = Cpu::create(ram);
+
+    cpu.x = 0x80;
+    cpu.read_instruction();
+
+    assert!(cpu.negative_flag);
+}
+
+#[test]
+fn tya_imp() {
+    let mut ram = Ram::create();
+    ram.write(0x0, 0x98);
+    let mut cpu = Cpu::create(ram);
+
+    cpu.y = 0x3;
+    cpu.read_instruction();
+
+    assert_eq!(cpu.a, cpu.y);
+    assert_eq!(cpu.pc, 0x1);
+}
+
+#[test]
+fn tya_zero_flag() {
+    let mut ram = Ram::create();
+    ram.write(0x0, 0x98);
+    let mut cpu = Cpu::create(ram);
+
+    cpu.y = 0x0;
+    cpu.read_instruction();
+
+    assert!(cpu.zero_flag);
+}
+
+#[test]
+fn tya_negative_flag() {
+    let mut ram = Ram::create();
+    ram.write(0x0, 0x98);
+    let mut cpu = Cpu::create(ram);
+
+    cpu.y = 0x80;
+    cpu.read_instruction();
+
+    assert!(cpu.negative_flag);
 }
